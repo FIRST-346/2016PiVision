@@ -10,27 +10,27 @@ The following steps will happen
 
 """
 #External Libs
-from picamera.array import PiRGBArray
-from picamera import PiCamera
+#from picamera.array import PiRGBArray
+#from picamera import PiCamera
 import time
 import cv2
 
 #Internal libs
-from input import camStill
-from input import camStream
+#from input import camStill
+#from input import camStream
 from input import diskStill
 from config import fileConfig
 from process import hsv
 from output import file
 
 class main:
-   def getInput(self, type, resolution):
+   def getInput(self, type, resolution, config):
       if type == "camStill":
          return camStill.camera(resolution)
       if type == "camStream":
          return camStream.camera(resolution)
       if type == "diskStill":
-         return diskStill.camera(resolution)
+         return diskStill.camera(resolution, config.imageStillPathIn)
 
    def main(self):
       print "Entering main"
@@ -40,10 +40,10 @@ class main:
       print "Looking for net config for 5s"
      
 
-      camera = self.getInput(config.input,config.captureResolution)
+      camera = self.getInput(config.input,config.captureResolution, config)
       filter = hsv.hsv(config.hsv_low, config.hsv_high)
 
-      imageWriter = file.stillImage(config.imageStillPath)
+      imageWriter = file.stillImage(config.imageStillPathOut)
       print "Entering main loop"
 
       frames = 0
@@ -54,7 +54,7 @@ class main:
          frames = frames + 1
          print "Main loop start"
          print "Getting input image " + `frames`
-	 img = frame #camera.getImage()
+	 img = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
          print "Applying filter x of y"
          img2 = filter.filterHSV(img)
          print "Running HSV filter"
