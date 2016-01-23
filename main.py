@@ -18,9 +18,10 @@ import cv2
 #Internal libs
 from input import camStill
 from input import camStream
+from input import diskStill
 from config import fileConfig
 from process import hsv
-
+from output import file
 
 class main:
    def getInput(self, type, resolution):
@@ -28,21 +29,23 @@ class main:
          return camStill.camera(resolution)
       if type == "camStream":
          return camStream.camera(resolution)
+      if type == "diskStill":
+         return diskStill.camera(resolution)
 
    def main(self):
       print "Entering main"
       print "Reading file config"
       config = fileConfig.config()
-      #Todo get this from config
-      hsv_low = [0,0,0]
-      hsv_high = [1,1,1]
-      captureResolution = (640,480)
-      captureType = "camStream"
+      
       print "Looking for net config for 5s"
-      camera = self.getInput(config.captureType,config.captureResolution)
-      filter = hsv.hsv()
+     
+
+      camera = self.getInput(config.input,config.captureResolution)
+      filter = hsv.hsv(config.hsv_low, config.hsv_high)
+
+      imageWriter = file.stillImage(config.imageStillPath)
       print "Entering main loop"
-      #Loop here
+
       frames = 0
       millis = time.time()
       for frame in camera.getImage():
@@ -53,13 +56,16 @@ class main:
          print "Getting input image " + `frames`
 	 img = frame #camera.getImage()
          print "Applying filter x of y"
-         img2 = filter.filterHSV(img, hsv_low, hsv_high)
+         img2 = filter.filterHSV(img)
          print "Running HSV filter"
          print "Running glyph tracking"
          print "Outputting x of y"
          fps = int(round(1000/((time.time()-millis2)*1000)))
          print "Loop bottom " + `fps`
-         camera.rawCapture.truncate(0)
+         if type == "camStill" or type == "camStream":
+            camera.rawCapture.truncate(0)
+         if config.writeFrame:
+            imageWriter.write(img2)
 
 
 
