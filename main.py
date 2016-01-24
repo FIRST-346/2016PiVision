@@ -57,6 +57,50 @@ class main:
 	 img = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
          print "Applying filter x of y"
          img2 = filter.filterHSV(img)
+         img2 = cv2.GaussianBlur(img2, (5,5), 0)
+         #img3 = cv2.GaussianBlur(img, (5,5), 0)
+         #img2 = cv2.Canny(img2, 100, 200)
+         contours, _ = cv2.findContours(img2, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+         contours = sorted(contours, key=cv2.contourArea, reverse=True)[:10]
+         biggest_area = -1
+         biggest = None
+         biggest_xy1 = 0,0
+         biggest_xy2 = 0,0
+         biggest2_area = -1
+         biggest2 = None
+         biggest2_xy1 = 0,0
+         biggest2_xy2 = 0,0
+         for contour in contours:
+            perimeter = cv2.arcLength(contour, True)
+            approx = cv2.approxPolyDP(contour, 0.01*perimeter, True)
+            print "Looking at " + `len(approx)`
+            x,y,w,h = cv2.boundingRect(contour)
+            aspect = float(w)/float(h)
+            print "x: " + `x` + " y: " + `y` + " w: " + `w` + " h: " + `h` + " a: " + `aspect`
+            if len(approx) == 8:
+               if w*h > biggest_area:
+                  biggest2_area = biggest_area
+                  biggest2 = biggest
+                  biggest2_xy1 = biggest_xy1
+                  biggest2_xy2 = biggest_xy2
+
+                  biggest_area = w*h
+                  biggest = approx
+                  biggest_xy1 = (x-5,y-5)
+                  biggest_xy2 = (x+w+5,y+h+5)
+               else:
+                  if w*h >= biggest2_area:
+                     biggest2_area = w*h
+                     biggest2 = approx
+                     biggest2_xy1 = (x-5,y-5)
+                     biggest2_xy2 = (x+w+5,y+h+5)
+#            if len(approx) == 8:
+         print "Biggest is " + `biggest`
+         print "Biggest2 is " + `biggest2`
+         if biggest != None:
+            cv2.rectangle(frame, biggest_xy1, biggest_xy2, (255,0,0), 2)
+         if biggest2 != None:
+            cv2.rectangle(frame, biggest2_xy1, biggest2_xy2, (255,255,255), 2)
          print "Running HSV filter"
          print "Running glyph tracking"
          print "Outputting x of y"
@@ -65,7 +109,7 @@ class main:
          if type == "camStill" or type == "camStream":
             camera.rawCapture.truncate(0)
          if config.writeFrame:
-            imageWriter.write(img2)
+            imageWriter.write(frame)
 
 
 

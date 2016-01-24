@@ -6,8 +6,8 @@ class config:
       #Init default values before reading the config file ...
       self.captureResolution = (640,480)
       self.input = "diskStill"
-      self.hsv_low = [55,50,50]
-      self.hsv_high = [95,255,255]
+      self.hsv_low = [80,50,50]
+      self.hsv_high = [90,255,200]
       self.writeFrame = True
       self.imageStillPathIn = "/tmp/test_in.jpg"
       self.imageStillPathOut = "/tmp/test_out.png"
