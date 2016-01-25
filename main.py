@@ -17,8 +17,8 @@ import cv2
 import numpy as np
 
 #Internal libs
-#from input import camStill
-#from input import camStream
+from input import camStill
+from input import camStream
 from input import diskStill
 from config import fileConfig
 from process import hsv
@@ -87,8 +87,12 @@ class main:
 
       frames = 0
       millis = time.time()
-      for frame in camera.getImage():
+      for f in camera.getImage():
          millis2 = time.time()
+         if config.input == "camStream":
+            frame = f.array
+         else:
+            frame = f
          #time.sleep(0.1)
          frames = frames + 1
          #print "Main loop start"
@@ -165,7 +169,8 @@ class main:
          #print "Outputting x of y"
          fps = int(round(1000/((time.time()-millis2)*1000)))
          print "Loop bottom " + `fps`
-         if type == "camStill" or type == "camStream":
+         if config.input == "camStill" or config.input == "camStream":
+            print "Clearing buffer"
             camera.rawCapture.truncate(0)
          if config.writeFrame:
             imageWriter.write(frame)
