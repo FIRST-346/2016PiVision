@@ -67,6 +67,7 @@ class main:
       K = np.array([[alpha_u, 0.0, u0], 
                     [0.0, alpha_v, v0],
                     [0.0, 0.0, 1.0]])
+#TODO: Recalculate this to be from the final position on the robot eg if the camera is looking up it will appear trapizodial!
       target_obj = np.array ([[-0.833,-0.583,0], 
                              [0.833,-0.583,0], 
                              [0.833,0.583,0], 
