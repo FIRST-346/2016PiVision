@@ -44,8 +44,8 @@ class main:
    def main(self):
       # Focal length, sensor size (mm and px)
       f = 33.0 # mm
-      pix_width = 4928.0 # sensor size has 4928px in width
-      pix_height = 3624.0 # sensor size has 4928px in width
+      pix_width = 640.0 # sensor size has 4928px in width
+      pix_height = 480.0 # sensor size has 4928px in width
       sensor_width = 23.7 # mm
       sensor_height = 15.7 # mm
       
