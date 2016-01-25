@@ -14,6 +14,7 @@ The following steps will happen
 #from picamera import PiCamera
 import time
 import cv2
+import numpy as np
 
 #Internal libs
 #from input import camStill
@@ -24,6 +25,14 @@ from process import hsv
 from output import file
 
 class main:
+   
+
+   def findBounds(self, points):
+      #Find Centroid
+      #Find 4 points with longest distance from centroid
+      x = 1
+      
+
    def getInput(self, type, resolution, config):
       if type == "camStill":
          return camStill.camera(resolution)
@@ -33,6 +42,35 @@ class main:
          return diskStill.camera(resolution, config.imageStillPathIn)
 
    def main(self):
+      # Focal length, sensor size (mm and px)
+      f = 33.0 # mm
+      pix_width = 4928.0 # sensor size has 4928px in width
+      pix_height = 3624.0 # sensor size has 4928px in width
+      sensor_width = 23.7 # mm
+      sensor_height = 15.7 # mm
+      
+      # set center pixel
+      u0 = int(pix_width / 2.0)
+      v0 = int(pix_height / 2.0)
+      
+      # determine values of camera-matrix
+      mu = pix_width / sensor_width # px/mm
+      alpha_u = f * mu # px
+      
+      mv = pix_height / sensor_height # px/mm
+      alpha_v = f * mv # px
+      
+      # Distortion coefs 
+      D = np.array([[0.0, 0.0, 0.0, 0.0]])
+      
+      # Camera matrix
+      K = np.array([[alpha_u, 0.0, u0], 
+                    [0.0, alpha_v, v0],
+                    [0.0, 0.0, 1.0]])
+      target_obj = np.array ([[-0.833,-0.583,0], 
+                             [0.833,-0.583,0], 
+                             [0.833,0.583,0], 
+                             [0.833,-0.583,0]])
       print "Entering main"
       print "Reading file config"
       config = fileConfig.config()
@@ -52,14 +90,15 @@ class main:
          millis2 = time.time()
          #time.sleep(0.1)
          frames = frames + 1
-         print "Main loop start"
-         print "Getting input image " + `frames`
+         #print "Main loop start"
+        # print "Getting input image " + `frames`
 	 img = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
-         print "Applying filter x of y"
+         #print "Applying filter x of y"
          img2 = filter.filterHSV(img)
-         img2 = cv2.GaussianBlur(img2, (5,5), 0)
+         #img2 = cv2.GaussianBlur(img2, (5,5), 0)
          #img3 = cv2.GaussianBlur(img, (5,5), 0)
          #img2 = cv2.Canny(img2, 100, 200)
+         #imageWriter.write(img2)
          contours, _ = cv2.findContours(img2, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
          contours = sorted(contours, key=cv2.contourArea, reverse=True)[:10]
          biggest_area = -1
@@ -73,10 +112,10 @@ class main:
          for contour in contours:
             perimeter = cv2.arcLength(contour, True)
             approx = cv2.approxPolyDP(contour, 0.01*perimeter, True)
-            print "Looking at " + `len(approx)`
+            #print "Looking at " + `len(approx)`
             x,y,w,h = cv2.boundingRect(contour)
             aspect = float(w)/float(h)
-            print "x: " + `x` + " y: " + `y` + " w: " + `w` + " h: " + `h` + " a: " + `aspect`
+            #print "x: " + `x` + " y: " + `y` + " w: " + `w` + " h: " + `h` + " a: " + `aspect`
             if len(approx) == 8:
                if w*h > biggest_area:
                   biggest2_area = biggest_area
@@ -94,16 +133,35 @@ class main:
                      biggest2 = approx
                      biggest2_xy1 = (x-5,y-5)
                      biggest2_xy2 = (x+w+5,y+h+5)
-#            if len(approx) == 8:
-         print "Biggest is " + `biggest`
-         print "Biggest2 is " + `biggest2`
+
+         #print "Biggest is " + `biggest`
+         #print "Biggest2 is " + `biggest2`
          if biggest != None:
             cv2.rectangle(frame, biggest_xy1, biggest_xy2, (255,0,0), 2)
+            cv2.drawContours(frame, biggest, -1, (0,255,0), 3)
+            #bounds = self.findBounds(biggest)
+            hull = cv2.convexHull(biggest)
+            hullr = np.zeros((len(hull), 2), np.float32)
+            i = 0
+            for pt in hull:
+               print "Setting " + `i` + " to " + `pt[0]`
+               hullr[i] = pt[0]
+               i = i + 1
+            print `target_obj` + " => " + `hullr` + " => " + `K` + " => " + `D`
+            cv2.drawContours(frame, hull, -1, (255,0,0), 10)
+            retval, rvec, tvec = cv2.solvePnP(target_obj, hullr, K, D)
+            print `retval` + " => " + `rvec` + " => " + `tvec`
+            
          if biggest2 != None:
             cv2.rectangle(frame, biggest2_xy1, biggest2_xy2, (255,255,255), 2)
-         print "Running HSV filter"
-         print "Running glyph tracking"
-         print "Outputting x of y"
+            cv2.drawContours(frame, biggest2, -1, (0,0,255), 3)
+#TODO: Determine the outermost points
+#TODO: Determine the orientation of the points
+
+
+         #print "Running HSV filter"
+         #print "Running glyph tracking"
+         #print "Outputting x of y"
          fps = int(round(1000/((time.time()-millis2)*1000)))
          print "Loop bottom " + `fps`
          if type == "camStill" or type == "camStream":
