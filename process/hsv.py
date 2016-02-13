@@ -7,6 +7,6 @@ class hsv:
       self.hsv_high = numpy.array((hsv_high[0], hsv_high[1], hsv_high[2]), dtype=numpy.uint8, ndmin=1)
 
    def filterHSV(self, img):
-      print "Filtering image to " + `self.hsv_low` + " -> " + `self.hsv_high` 
+      #print "Filtering image to " + `self.hsv_low` + " -> " + `self.hsv_high` 
       return cv2.inRange(img, self.hsv_low, self.hsv_high)
 
