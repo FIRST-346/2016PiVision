@@ -18,8 +18,8 @@ import cv2
 import numpy as np
 
 #Internal libs
-#from input import camStill
-#from input import camStream
+from input import camStill
+from input import camStream
 from input import diskStill
 from input import diskStream
 from config import fileConfig
@@ -70,10 +70,10 @@ class main:
 
 
       for r in range(3,10):
-         cv2.circle(frame, (tlc[0], tlc[1]), r, (255,255,255))
-         cv2.circle(frame, (trc[0], trc[1]), r, (0,0,255))
-         cv2.circle(frame, (blc[0], blc[1]), r, (0,255,0))
-         cv2.circle(frame, (brc[0], brc[1]), r, (255,0,0))
+         cv2.circle(frame, (tlc[0], tlc[1]), r, (255,255,255)) #White
+         cv2.circle(frame, (trc[0], trc[1]), r, (0,0,255)) #Red
+         cv2.circle(frame, (blc[0], blc[1]), r, (0,255,0)) #Green
+         cv2.circle(frame, (brc[0], brc[1]), r, (255,0,0)) #Blue
 
       ret = np.zeros((4,2), np.float32)
       ret[0] = tlc
@@ -87,7 +87,7 @@ class main:
       if type == "camStill":
          return camStill.camera(resolution)
       if type == "camStream":
-         return camStream.camera(resolution, config.shutter)
+         return camStream.camera(resolution, config.shutter, config.whiteBalance)
       if type == "diskStill":
          return diskStill.camera(resolution, config.imageStillPathIn)
       if type == "diskStream":
@@ -128,10 +128,14 @@ class main:
                              [0.833,-0.5,0], #Outer Top Right
                              [0.833,0.5,0], #Outer Bottom Right
                              [0.833,-0.5,0]], dtype='f') #Outer Bottom Left
+#      self.target_obj_simple = np.array([[-0.833, -0.5, 0],
+#                            [-0.833, 0.5, 0],
+#                            [0.833, 0.5, 0],
+#                            [0.833, -0.5, 0]])
       self.target_obj_simple = np.array([[-0.833, -0.5, 0],
-                            [-0.833, 0.5, 0],
+                            [0.833, -0.5, 0],
                             [0.833, 0.5, 0],
-                            [0.833, -0.5, 0]])
+                            [-0.833, 0.5, 0]])
       print "Entering main"
       print "Reading file config"
       self.config = fileConfig.config()
@@ -157,14 +161,20 @@ class main:
       self.simpleImageWriter = file.stillImageWriter()
 
       print "Entering main loop"
+      self.lastValid = self.config.timeout*-1
+      self.isValid = False
+      self.lastIsValid = False
 
       frames = 0
       millis = time.time()
+
       if self.config.input != "diskStream":
          for frame in camera.getImage():
             if self.config.input == "camStream":
                frame = frame.array
-            processFrame(frame)
+            self.processFrame(frame)
+            if self.config.input == "camStill" or self.config.input == "camStream":
+               camera.rawCapture.truncate(0)
       else:
          while camera.hasMore():
              ret, frame = camera.getImage()
@@ -179,8 +189,9 @@ class main:
          hsvImg = self.filter.filterHSV(img)
 
          
-#Blur the image
-         blur = cv2.GaussianBlur(hsvImg, (7,7), 0)
+#Blur the image to smooth out the rough edges
+         blur = cv2.GaussianBlur(hsvImg, (3,3), 1)
+         blur = cv2.GaussianBlur(hsvImg, (7,7), 1)
          cont = blur.copy()
          contoursImg = frame.copy()
          result = frame.copy()
@@ -205,7 +216,8 @@ class main:
             x,y,w,h = cv2.boundingRect(contour)
             aspect = float(w)/float(h)
             area = cv2.contourArea(approx)
-            if len(approx) == 8 and not(area <  self.config.minArea):
+            print "Looking at " + `len(approx)`
+            if len(approx) >= 8 and len(approx) <= 10 and not(area <  self.config.minArea):
                #print "Area is " + `area` + " " + `cv2.isContourConvex(approx)` + " " + `not(cv2.isContourConvex(approx))`
                
                if w*h > biggest_area:
@@ -264,23 +276,24 @@ class main:
             
             if len(corners) == len(self.target_obj_simple):
                retval, rvec, tvec = cv2.solvePnP(self.target_obj_simple, corners, self.K, self.D)
-#               cv2.circle(result, (hullr[0][0], hullr[0][1]), 5, (255,255,255))
-#               cv2.circle(result, (hullr[1][0], hullr[1][1]), 5, (0,0,255))
-#               cv2.circle(result, (hullr[1][0], hullr[1][1]), 7, (0,0,255))
-#               cv2.circle(result, (hullr[7][0], hullr[7][1]), 5, (0,255,0))
-#               cv2.circle(result, (hullr[7][0], hullr[7][1]), 7, (0,255,0))
-#               cv2.circle(result, (hullr[7][0], hullr[7][1]), 9, (0,255,0))
-               cv2.putText(result,"xyz", (80,20), cv2.FONT_HERSHEY_SIMPLEX, 0.4, (255,255,255),2)
-               cv2.putText(result,`tvec[0][0]`, (80,40), cv2.FONT_HERSHEY_SIMPLEX, 0.4, (255,255,255),2)
-               cv2.putText(result,`tvec[1][0]`, (80,60), cv2.FONT_HERSHEY_SIMPLEX, 0.4, (255,255,255),2)
-               cv2.putText(result,`tvec[2][0]`, (80,80), cv2.FONT_HERSHEY_SIMPLEX, 0.4, (255,255,255),2)
+               self.lastValid = time.time()*1000
+               self.isValid = True
+               self.lastTargetT = tvec
+               self.lastTargetR = rvec
+               self.putTarget()
+               self.putValid()
+               if self.config.writeFrames:
+                  cv2.putText(result,"xyz", (80,20), cv2.FONT_HERSHEY_SIMPLEX, 0.4, (255,255,255),2)
+                  cv2.putText(result,`tvec[0][0]`, (80,40), cv2.FONT_HERSHEY_SIMPLEX, 0.4, (255,255,255),2)
+                  cv2.putText(result,`tvec[1][0]`, (80,60), cv2.FONT_HERSHEY_SIMPLEX, 0.4, (255,255,255),2)
+                  cv2.putText(result,`tvec[2][0]`, (80,80), cv2.FONT_HERSHEY_SIMPLEX, 0.4, (255,255,255),2)
 
-               cv2.putText(result,"rot", (80,120), cv2.FONT_HERSHEY_SIMPLEX, 0.4, (255,255,255),2)
-               cv2.putText(result,`rvec[0][0]`, (80,140), cv2.FONT_HERSHEY_SIMPLEX, 0.4, (255,255,255),2)
-               cv2.putText(result,`rvec[1][0]`, (80,160), cv2.FONT_HERSHEY_SIMPLEX, 0.4, (255,255,255),2)
-               cv2.putText(result,`rvec[2][0]`, (80,180), cv2.FONT_HERSHEY_SIMPLEX, 0.4, (255,255,255),2)
-               print `retval` + " => " + `rvec` + " => " + `tvec`
-
+                  cv2.putText(result,"rot", (80,120), cv2.FONT_HERSHEY_SIMPLEX, 0.4, (255,255,255),2)
+                  cv2.putText(result,`rvec[0][0]`, (80,140), cv2.FONT_HERSHEY_SIMPLEX, 0.4, (255,255,255),2)
+                  cv2.putText(result,`rvec[1][0]`, (80,160), cv2.FONT_HERSHEY_SIMPLEX, 0.4, (255,255,255),2)
+                  cv2.putText(result,`rvec[2][0]`, (80,180), cv2.FONT_HERSHEY_SIMPLEX, 0.4, (255,255,255),2)
+                  print `retval` + " => " + `rvec` + " => " + `tvec`
+           
          
 #Write the in frame if we are configured to do so
          if self.config.writeFrame:
@@ -299,12 +312,37 @@ class main:
             self.movie.writeFrame(sbs)
             self.movieIn.writeFrame(frame)
 
-         print "Loop bottom "
+         
+         delta = (time.time()*1000) - self.lastValid
+         #print `delta`
+
+         if self.isValid and delta > self.config.timeout:
+#Targeting Timeout, clear the info
+            self.isValid = False
+            self.putValid()
+         millis = time.time()
+         print "Loop bottom " + `millis`
 
 #Clear buffer after we are done ...        
-         if self.config.input == "camStill" or self.config.input == "camStream":
-            camera.rawCapture.truncate(0)
+         
         
+   def putValid(self):
+      if self.isValid != self.lastIsValid:
+         print "Putting valid: " + `self.isValid` + " " + `self.lastIsValid`
+         self.sd.putBoolean("camera_isValid", self.isValid);
+      self.lastIsValid = self.isValid
+
+
+   def putTarget(self):
+      print `self.lastTargetT[2][0]`
+      self.sd.putNumber("camera_last_target_x", self.lastTargetT[0][0])
+      self.sd.putNumber("camera_last_target_y", self.lastTargetT[1][0])
+      self.sd.putNumber("camera_last_target_z", self.lastTargetT[2][0])
+      
+      self.sd.putNumber("camera_last_target_rot_x", self.lastTargetR[0][0])
+      self.sd.putNumber("camera_last_target_rot_y", self.lastTargetR[1][0])
+      self.sd.putNumber("camera_last_target_rot_z", self.lastTargetR[2][0])
+
 class weightedPoint:
    def __init__(self, point, centroid):
       dx = point[1:] - centroid[0],

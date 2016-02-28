@@ -2,9 +2,9 @@ class config:
    def __init__(self, fileConfig, networkTable):
       self.config = fileConfig
       self.networkTable = networkTable
-      self.networkTable.addGlobalListener(self.valueChanged)
+      #self.networkTable.addGlobalListener(self.valueChanged)
       self.c_listener = ConnectionListener(self)
-      self.networkTable.addConnectionListener(self.c_listener)
+      #self.networkTable.addConnectionListener(self.c_listener)
       self.watchedKeys = {}
       self.regCall('cameraH_Low', self.handleCallback);
 
@@ -13,21 +13,21 @@ class config:
 
    def tryGetValueOrPut(self, key, default):
       try:
-         i = self.networkTablegetNumber(key)
+         i = self.networkTable.getNumber(key)
          return i
       except KeyError:
-         self.networkTableputNumber(key, default)
+         self.networkTable.putNumber(key, default)
          return default
 
    def connected(self):
 # Get the default values if they exist, otherwise put them
-      self.config.cameraH_Low = tryGetValueOrPut('cameraH_Low', self.config.cameraH_Low)
-      self.config.cameraS_Low = tryGetValueOrPut('cameraS_Low',self.config.cameraS_Low)
-      self.config.cameraV_Low = tryGetValueOrPut('cameraV_Low', self.config.cameraV_Low)
-      self.config.cameraH_High = tryGetValueOrPut('cameraH_High', self.config.cameraH_High)
-      self.config.cameraS_High = tryGetValueOrPut('cameraS_High', self.config.cameraS_High)
-      self.config.cameraV_High = tryGetValueOrPut('cameraV_High', self.config.cameraV_High)
-      self.config.cameraV_High = tryGetValueOrPut('camera_shutter', self.config.cameraV_High)
+      self.config.cameraH_Low = self.tryGetValueOrPut('cameraH_Low', self.config.cameraH_Low)
+      self.config.cameraS_Low = self.tryGetValueOrPut('cameraS_Low',self.config.cameraS_Low)
+      self.config.cameraV_Low = self.tryGetValueOrPut('cameraV_Low', self.config.cameraV_Low)
+      self.config.cameraH_High = self.tryGetValueOrPut('cameraH_High', self.config.cameraH_High)
+      self.config.cameraS_High = self.tryGetValueOrPut('cameraS_High', self.config.cameraS_High)
+      self.config.cameraV_High = self.tryGetValueOrPut('cameraV_High', self.config.cameraV_High)
+      self.config.cameraV_High = self.tryGetValueOrPut('camera_shutter', self.config.cameraV_High)
          
 #TODO: Do something about camera changed
 
