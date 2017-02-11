@@ -322,6 +322,7 @@ class main:
             self.putValid()
          millis = time.time()
          print "Loop bottom " + `millis`
+         self.sd.putNumber("camera_time", millis);
 
 #Clear buffer after we are done ...        
          
