@@ -1,0 +1,8 @@
+<div line-chart="Graph.data"></div>
+
+<div ng-repeat="row in Graph.data">
+	<p><h4>{{row.time}}</h4></p>
+	<p ng-repeat="(key,value) in row.values track by key">
+		{{key}} = {{value}}
+	</p>
+</div>

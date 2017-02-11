@@ -18,8 +18,8 @@ import cv2
 import numpy as np
 
 #Internal libs
-from input import camStill
-from input import camStream
+#from input import camStill
+#from input import camStream
 from input import diskStill
 from input import diskStream
 from config import fileConfig
@@ -30,15 +30,21 @@ from output import file
 import sys
 from networktables import NetworkTable
 
+<<<<<<< HEAD
 def getWeight(point):
    return point.getWeight()
+=======
+>>>>>>> 867fb6db1dcd5690c4702f06355b091f48bb5c18
 
 class main:
    def rotate(self, l, x):
       return l[-x:] + l[:-x]
+<<<<<<< HEAD
 
 
    
+=======
+>>>>>>> 867fb6db1dcd5690c4702f06355b091f48bb5c18
 
    def findCorners(self, frame, points, centroid):
       tlc = centroid
@@ -87,7 +93,11 @@ class main:
       if type == "camStill":
          return camStill.camera(resolution)
       if type == "camStream":
+<<<<<<< HEAD
          return camStream.camera(resolution, config.shutter, config.whiteBalance)
+=======
+         return camStream.camera(resolution, config.shutter)
+>>>>>>> 867fb6db1dcd5690c4702f06355b091f48bb5c18
       if type == "diskStill":
          return diskStill.camera(resolution, config.imageStillPathIn)
       if type == "diskStream":
@@ -120,7 +130,11 @@ class main:
                     [0.0, alpha_v, v0],
                     [0.0, 0.0, 1.0]])
 #TODO: Recalculate this to be from the final position on the robot eg if the camera is looking up it will appear trapizodial!
+<<<<<<< HEAD
       self.target_obj = np.array ([[-0.833,-0.5,0], #Outer Top Left
+=======
+      target_obj = np.array ([[-0.833,-0.5,0], #Outer Top Left
+>>>>>>> 867fb6db1dcd5690c4702f06355b091f48bb5c18
                              [-0.666,-0.5,0], #Inner Top Left
                              [-0.666,0.333,0], #Inner Bottom Left
                              [0.666,0.333,0], #Inner Bottom Right
@@ -128,6 +142,7 @@ class main:
                              [0.833,-0.5,0], #Outer Top Right
                              [0.833,0.5,0], #Outer Bottom Right
                              [0.833,-0.5,0]], dtype='f') #Outer Bottom Left
+<<<<<<< HEAD
 #      self.target_obj_simple = np.array([[-0.833, -0.5, 0],
 #                            [-0.833, 0.5, 0],
 #                            [0.833, 0.5, 0],
@@ -136,11 +151,18 @@ class main:
                             [0.833, -0.5, 0],
                             [0.833, 0.5, 0],
                             [-0.833, 0.5, 0]])
+=======
+      #target_obj = np.array([[-0.833, -0.5, 0],
+      #                      [-0.833, 0.5, 0],
+      #                      [0.833, 0.5, 0],
+      #                      [0.833, -0.5, 0]])
+>>>>>>> 867fb6db1dcd5690c4702f06355b091f48bb5c18
       print "Entering main"
       print "Reading file config"
       self.config = fileConfig.config()
       
       #Network table
+<<<<<<< HEAD
       NetworkTable.setIPAddress(self.config.ip)
       NetworkTable.setClientMode()
       NetworkTable.initialize()
@@ -151,6 +173,15 @@ class main:
       if self.config.writeFrames:
          self.movie = file.imageStreamer('/tmp/out.avi',(640*3,480))
          self.movieIn = file.imageStreamer('/tmp/out_raw.avi', (640,480))
+=======
+      NetworkTable.setIPAddress(config.ip)
+      NetworkTable.setClientMode()
+      NetworkTable.initialize()
+
+      sd = NetworkTable.getTable("SmartDashboard")
+
+      netConf = netConfig.config(config,sd)
+>>>>>>> 867fb6db1dcd5690c4702f06355b091f48bb5c18
 
       print "Looking for net config for 5s"
      
@@ -160,6 +191,12 @@ class main:
       
       self.simpleImageWriter = file.stillImageWriter()
 
+<<<<<<< HEAD
+=======
+      imageWriter = file.stillImage(config.imageStillPathOut)
+      imageWriter2 = file.stillImage(config.imageStillPathOut2)
+      imageWriter3 = file.stillImage(config.imageStillPathOut3)
+>>>>>>> 867fb6db1dcd5690c4702f06355b091f48bb5c18
       print "Entering main loop"
       self.lastValid = self.config.timeout*-1
       self.isValid = False
@@ -185,6 +222,7 @@ class main:
 
 #Convert colorspace to hsv
 	 img = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
+<<<<<<< HEAD
 #Filter the image
          hsvImg = self.filter.filterHSV(img)
 
@@ -195,6 +233,14 @@ class main:
          cont = blur.copy()
          contoursImg = frame.copy()
          result = frame.copy()
+=======
+         #print "Applying filter x of y"
+         img2 = filter.filterHSV(img)
+         if config.writeFrame:
+            imageWriter2.write(img2)
+         img3 = cv2.GaussianBlur(img2, (7,7), 0)
+         img2 = cv2.GaussianBlur(img2, (7,7), 0)
+>>>>>>> 867fb6db1dcd5690c4702f06355b091f48bb5c18
          #img2 = cv2.Canny(img2, 100, 200)
          #imageWriter.write(img2)
          contours, _ = cv2.findContours(cont, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
@@ -216,8 +262,12 @@ class main:
             x,y,w,h = cv2.boundingRect(contour)
             aspect = float(w)/float(h)
             area = cv2.contourArea(approx)
+<<<<<<< HEAD
             print "Looking at " + `len(approx)`
             if len(approx) >= 8 and len(approx) <= 10 and not(area <  self.config.minArea):
+=======
+            if len(approx) == 8 and not(area <  config.minArea):
+>>>>>>> 867fb6db1dcd5690c4702f06355b091f48bb5c18
                #print "Area is " + `area` + " " + `cv2.isContourConvex(approx)` + " " + `not(cv2.isContourConvex(approx))`
                
                if w*h > biggest_area:
@@ -228,6 +278,7 @@ class main:
               
  
          if biggest != None:
+<<<<<<< HEAD
             cv2.rectangle(result, biggest_xy1, biggest_xy2, (255,0,0), 2)
             cv2.drawContours(contoursImg, biggest, -1, (0,255,0), 3)
             moments = cv2.moments(biggest);
@@ -237,10 +288,23 @@ class main:
             hullr = np.zeros((len(biggest), 2), np.float32)
 
             corners = self.findCorners(result, biggest, centroid)
+=======
+            cv2.rectangle(frame, biggest_xy1, biggest_xy2, (255,0,0), 2)
+            cv2.drawContours(frame, biggest, -1, (0,255,0), 3)
+            moments = cv2.moments(biggest);
+            centroidx = int(moments['m10']/moments['m00'])
+            centroid = (centroidx , int(moments['m01']/moments['m00']) )
+            cv2.circle(frame, centroid, 5, (255,255,255))
+#            hull = cv2.convexHull(biggest)
+            hullr = np.zeros((len(biggest), 2), np.float32)
+
+            cv2.drawContours(frame, biggest, -1, (255,0,0), 10)
+>>>>>>> 867fb6db1dcd5690c4702f06355b091f48bb5c18
 
             i = 0
             dir = 1
 
+<<<<<<< HEAD
 #If the points start on the right we need to change the start index to be that of the left
 #            if biggest[0][0][0] > centroidx:
 #TODO: If we are starting at the top right and the next point is the left of that then i needs to be 5 not 3
@@ -354,6 +418,65 @@ class weightedPoint:
       for r in dta:
          ret = ret + r
       self.weight = ret
+=======
+            if biggest[0][0][0] > centroidx:
+               print "First point is the top right need to flip our pointses" + `biggest[0][0]`
+               i = 3
+            
+            for pt in biggest:
+               hullr[i] = pt[0]
+               i = i + dir
+               if i >= len(hullr):
+                  i = 0
+               if i < 0:
+                  i = len(hullr)-1
+
+            print `hullr`            
+            if hullr[7][1] < hullr[1][1]:
+               print "We need to flip our elements except point 0"
+               first = hullr[:1]
+               print "Point 0: " + `first`
+               rest = hullr[1:][::-1]
+               print "And the rest: " + `rest`
+               hullr = np.append(first,rest, axis=0)
+               print "And it all back together: " + `hullr`
+#               hullr = hullr[0]+hullr[:8][::-1]
+
+
+          
+
+            
+            if len(hullr) == len(target_obj):
+#               print "Solving for: " + `target_obj`
+#               print `hullr`
+               retval, rvec, tvec = cv2.solvePnP(target_obj, hullr, K, D)
+               cv2.circle(frame, (hullr[0][0], hullr[0][1]), 5, (255,255,255))
+               cv2.circle(frame, (hullr[1][0], hullr[1][1]), 5, (0,0,255))
+               cv2.circle(frame, (hullr[1][0], hullr[1][1]), 7, (0,0,255))
+               cv2.circle(frame, (hullr[7][0], hullr[7][1]), 5, (0,255,0))
+               cv2.circle(frame, (hullr[7][0], hullr[7][1]), 7, (0,255,0))
+               cv2.circle(frame, (hullr[7][0], hullr[7][1]), 9, (0,255,0))
+               print `retval` + " => " + `rvec` + " => " + `tvec`
+            else:
+               print "Target has more points then target! " + `len(hullr)` 
+               cv2.drawContours(frame, biggest, -1, (0,255,255), 3)
+               imageWriter.write(frame)
+               imageWriter2.write(img3)
+         
+#         if biggest2 != None:
+#            cv2.rectangle(frame, biggest2_xy1, biggest2_xy2, (255,255,255), 2)
+#            cv2.drawContours(frame, biggest2, -1, (0,0,255), 3)
+#TODO: Determine the outermost points
+#TODO: Determine the orientation of the points
+
+         fps = int(round(1000/((time.time()-millis2)*1000)))
+         print "Loop bottom " + `fps`
+         if config.input == "camStill" or config.input == "camStream":
+            #print "Clearing buffer"
+            camera.rawCapture.truncate(0)
+         if config.writeFrame:
+            imageWriter.write(frame)
+>>>>>>> 867fb6db1dcd5690c4702f06355b091f48bb5c18
 
 
    def getWeight(self):
