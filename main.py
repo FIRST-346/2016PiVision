@@ -1,3 +1,4 @@
+#!/usr/bin/python
 """
 This will handle the main vision processing
 The following steps will happen
@@ -16,6 +17,7 @@ import math
 import time
 import cv2
 import numpy as np
+import os, sys
 
 #Internal libs
 from input import camStill
@@ -322,6 +324,7 @@ class main:
             self.putValid()
          millis = time.time()
          print "Loop bottom " + `millis`
+         self.sd.putNumber("camera_time", millis);
 
 #Clear buffer after we are done ...        
          
@@ -358,5 +361,6 @@ class weightedPoint:
    def getWeight(self):
       return self.weight
 
+fpid = os.fork()
 m = main()
 m.main()

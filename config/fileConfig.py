@@ -18,7 +18,7 @@ class config:
       self.hsv_low = [40,50,40]
       self.hsv_high = [100,255,200]
       self.writeFrames = False
-      self.writeFrames = True
+      #self.writeFrames = True
       #self.writeFrame = True
       self.writeFrame = False
       self.imageStillPathIn = "/tmp/test_in.png"
