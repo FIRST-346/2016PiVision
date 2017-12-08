@@ -3,7 +3,7 @@
 
 class config:
    def __init__(self):
-      self.ip = 'roborio-346-frc.local'
+      self.ip = '10.3.46.2'
       #Init default values before reading the config file ...
       self.captureResolution = (640,480)
       self.input = "camStream"
